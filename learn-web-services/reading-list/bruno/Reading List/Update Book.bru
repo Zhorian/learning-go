@@ -6,6 +6,13 @@ meta {
 
 put {
   url: {{api_path}}/v1/books/1
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "title" : "Book Updated!",
+    "published": 1776
+  }
 }

@@ -6,6 +6,16 @@ meta {
 
 post {
   url: {{api_path}}/v1/books
-  body: none
+  body: json
   auth: none
+}
+
+body:json {
+  {
+    "title": "The adventures of Optimus Prime",
+    "published": 2021,
+    "pages": 814,
+    "genres": ["coming of age", "thriller"],
+    "rating": 11
+  }
 }
