@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reading_list/internal/data"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -18,11 +19,13 @@ import (
 type config struct {
 	port int
 	env  string
+	dsn  string
 }
 
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -30,17 +33,23 @@ func main() {
 
 	flag.IntVar(&cfg.port, "port", 4000, "API Server Port")
 	flag.StringVar(&cfg.env, "env", "dev", "Environment (dev|stage|prod)")
+	flag.StringVar(&cfg.dsn, "db-dsn", os.Getenv("READINGLIST_DB_DSN"), "PostgreSQL DSN")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
-	dbUrl := "postgres://postgres:superSecretPassword!@localhost:5432/reading_list?sslmode=disable"
-	db, err := sql.Open("postgres", dbUrl)
+	db, err := sql.Open("postgres", cfg.dsn)
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 		return
 	}
 	defer db.Close()
+
+	err = db.Ping()
+	if err != nil {
+		log.Fatalf("Could not ping the database: %v", err)
+		return
+	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -73,6 +82,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 	addr := fmt.Sprintf(":%d", app.config.port)
 	srv := &http.Server{
